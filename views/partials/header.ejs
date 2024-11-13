@@ -1,0 +1,98 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    
+    .blur {
+      filter: blur(10px);
+      transition: filter 0.5s;
+    }
+    
+    
+    .alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      z-index: 10000;
+      display: none;
+    }
+    .button {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 10001; /* Ensure the button is above the blur effect */
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  <script type="text/javascript">
+    function showAlert(message) {
+      document.querySelector('.alert').innerText = message;
+      document.querySelector('.alert').style.display = 'block';
+      document.querySelector('.button').style.display = 'block';
+      document.body.classList.add('blur');
+    }
+
+    function hideAlert() {
+      document.querySelector('.alert').style.display = 'none';
+      document.querySelector('.button').style.display = 'none';
+      document.body.classList.remove('blur');
+    }
+
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      const forbiddenKeys = ['PrintScreen'];
+      if (forbiddenKeys.includes(e.key)) {
+        e.preventDefault();
+        showAlert('Screenshots are disabled.');
+      }
+    });
+
+    function disablePrintScreen(e) {
+      if (e.key === 'PrintScreen') {
+        e.preventDefault();
+        showAlert('Screenshots are disabled.');
+      }
+    }
+
+    document.addEventListener('keyup', disablePrintScreen);
+
+  </script>
+</head>
+
+<body>
+  <nav>
+    <h1><a href="/">Ninja Smoothies</a></h1>
+    <ul>
+      <% if(user) { %>
+          <li>Welcome, <%= user.email %>
+          </li>
+          <li><a href="/logout" class="btn">Log out</a></li>
+      <% } else{ %>
+          <li><a href="/login">Log in</a></li>
+          <li><a href="/signup" class="btn">Sign up</a></li>
+      <% } %>
+            
+    </ul>
+  </nav>

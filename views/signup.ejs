@@ -1,0 +1,202 @@
+<%- include('partials/header'); -%>
+    <form id="signup">
+        <h2>Sign Up</h2>
+        <label for="email">Email</label>
+        <input type="text" name="email" required>
+        <div class="email error"></div>
+        <label for="password">Password</label>
+        <input type="password" name="password" required>
+        <div class="password error"></div>
+        <button>Next</button>
+    </form>
+    <form id="verifyOtp" style="display: none;">
+        <h2>Verify OTP</h2>
+        <label for="otp">OTP</label>
+        <input type="number" name="otp" placeholder="Enter OTP" required>
+        <div class="otp error"></div>
+        <button>Next</button>
+    </form>
+    <form id="verifyGa" style="display: none;">
+        <div id="imageContainer">
+            <!-- 3x3 Matrix of Selectable Blocks -->
+            <div class="block" id="block1" style="top: 0; left: 0; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(1)"></div>
+            <div class="block" id="block2" style="top: 0; left: 33.33%; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(2)"></div>
+            <div class="block" id="block3" style="top: 0; left: 66.66%; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(3)"></div>
+
+            <div class="block" id="block4" style="top: 33.33%; left: 0; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(4)"></div>
+            <div class="block" id="block5" style="top: 33.33%; left: 33.33%; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(5)"></div>
+            <div class="block" id="block6" style="top: 33.33%; left: 66.66%; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(6)"></div>
+
+            <div class="block" id="block7" style="top: 66.66%; left: 0; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(7)"></div>
+            <div class="block" id="block8" style="top: 66.66%; left: 33.33%; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(8)"></div>
+            <div class="block" id="block9" style="top: 66.66%; left: 66.66%; width: 33.33%; height: 33.33%;"
+                onclick="selectBlock(9)"></div>
+        </div>
+        <div class="ga error"></div>
+        <button>Sign up</button>
+    </form>
+
+    <script>
+        // global variable
+        let userId;
+        // signup form
+        const signupForm = document.querySelector('#signup');
+        const emailError = document.querySelector('.email.error');
+        const passwordError = document.querySelector('.password.error');
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // reset error
+            emailError.textContent = '';
+            passwordError.textContent = '';
+
+            const email = signupForm.email.value;
+            const password = signupForm.password.value;
+
+            try {
+                const res = await fetch('/signup', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password }),
+                    headers: { 'Content-type': 'application/json' }
+                });
+                const data = await res.json();
+                console.log(data);
+                if (data.errors) {
+                    emailError.textContent = data.errors.email
+                    passwordError.textContent = data.errors.password
+                }
+                if (data.user) {
+                    // location.assign('/');
+                    userId = data.user;
+                    signupForm.style.display = 'none';
+                    verifyOtpForm.style.display = 'block';
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        })
+
+        // opt verification form
+        const verifyOtpForm = document.querySelector('#verifyOtp');
+        const verifyGa = document.querySelector('#verifyGa');
+        const otpError = document.querySelector('.otp.error');
+
+        verifyOtpForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('hellootp');
+            // reset error
+            otpError.textContent = '';
+
+            const userOtp = verifyOtpForm.otp.value;
+
+            try {
+                const res = await fetch('/verifyOtp', {
+                    method: 'POST',
+                    body: JSON.stringify({ userId, userOtp }),
+                    headers: { 'Content-type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.errors) {
+                    otpError.textContent = data.errors.otp;
+                }
+                if (data.user) {
+                    verifyOtpForm.style.display = 'none';
+                    verifyGa.style.display = 'block';
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        })
+    </script>
+    <script>
+        const selectedBlocks = [];
+
+        function selectBlock(blockNumber) {
+            const block = document.getElementById(`block${blockNumber}`);
+            if (selectedBlocks.includes(blockNumber)) {
+                // Deselect the block
+                block.style.opacity = 0.5;
+                block.innerHTML = '';
+                const index = selectedBlocks.indexOf(blockNumber);
+                if (index !== -1) {
+                    selectedBlocks.splice(index, 1);
+                }
+            } else {
+                // Select the block
+                block.style.opacity = 1.0;
+                block.innerHTML = blockNumber;
+                selectedBlocks.push(blockNumber);
+            }
+
+            // Send the selected block values to the backend
+            // sendSelectedBlocksToBackend();
+        }
+
+        const gaError = document.querySelector('.ga.error');
+
+        verifyGa.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            otpError.textContent = '';
+
+            try {
+                if (selectedBlocks.length !== 9) {
+                    otpError.textContent = 'Please Select all the blocks';
+                    return;
+                }
+                const gaSequence = parseInt(selectedBlocks.join(''), 10);
+                const res = await fetch('/createGa', {
+                    method: 'POST',
+                    body: JSON.stringify({ userId, gaSequence }),
+                    headers: { 'Content-type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.errors) {
+                    otpError.textContent = data.errors.ga;
+                }
+                if (data.user) {
+                    location.assign('/');
+                }
+            } catch (error) {
+                console.log(error.message);
+            }
+        });
+
+        
+
+        // Function to set car and bus images
+        function setCarBusImages() {
+            function getRandomImageUrls(totalImages, numberOfImages) {
+                const allImages = Array.from({ length: totalImages }, (_, i) => `/cars${i + 1}.jpg`);
+                const selectedImages = [];
+
+                while (selectedImages.length < numberOfImages) {
+                    const randomIndex = Math.floor(Math.random() * allImages.length);
+                    const image = allImages.splice(randomIndex, 1)[0];
+                    selectedImages.push(image);
+                }
+
+                return selectedImages;
+            }
+
+            const imageUrls = getRandomImageUrls(20, 9);
+
+            for (let i = 1; i <= 9; i++) {
+                const block = document.getElementById(`block${i}`);
+                const randomImageUrl = imageUrls[i - 1];
+                block.style.backgroundImage = `url(${randomImageUrl})`;
+            }
+        }
+
+        // Call the function to set car and bus images
+        setCarBusImages();
+    </script>
+    <%- include('partials/footer'); -%>
